@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ActivitySummary{
+public struct ActivitySummary: Sendable, Equatable{
     
     public var steps: Double
     public var distanceMeters: Double
@@ -21,6 +21,6 @@ public struct ActivitySummary{
         self.date = date
     }
     
-    
+    public static let empty = ActivitySummary()
     
 }

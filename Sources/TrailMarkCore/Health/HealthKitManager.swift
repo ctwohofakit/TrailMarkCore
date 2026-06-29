@@ -21,7 +21,7 @@ public final class HealthKitManager{
         case denied
         case notDetermined
     }
-    
+    public private(set) var todaySummary: ActivitySummary = .empty
     //getter setter private set
     public private(set)var authorizationState: AuthorizationState = .unknown //3. create authorization state to unknow, consume can read from but canot set
     
@@ -39,7 +39,7 @@ public final class HealthKitManager{
     private var heartRateType: HKQuantityType{HKQuantityType(.heartRate) }
     private var sleepType: HKCategoryType{HKCategoryType(.sleepAnalysis) }
     
-    
+    //MARK: authoization model
     //reading
     private var readyType: Set<HKObjectType> {
         [stepsType, distanceType, energyType, heartRateType, sleepType, HKObjectType.workoutType()]
@@ -56,8 +56,8 @@ public final class HealthKitManager{
             return
         }
         authorizationState = .requesting
-    
-    
+        
+        
         do {
             try await store.requestAuthorization(toShare: shareTypes, read: shareTypes)
             //note: for privacy ios nevel tells us whether read access was granted
@@ -67,8 +67,71 @@ public final class HealthKitManager{
         } catch {
             authorizationState = .denied
         }
-    
+        
+    }
+    public func refreshToday()async{
+        guard authorizationState == .authorized else {return}
+        
+        //create time predicate
+        let calendar = Calendar.current
+        let now = Date() //ISO6001 2026-06*25T17:24:12.000UTC
+        let startOfDay = calendar.startOfDay(for: now) //2026-06*25T17:24:12.000UTC
+        
+        async let steps = getSumQuanityFromStartDate(stepsType, unit: .count(), since: startOfDay)
+        async let distance = getSumQuanityFromStartDate(stepsType, unit: .meter(), since: startOfDay)
+        async let energy = getSumQuanityFromStartDate(stepsType, unit: .kilocalorie(), since: startOfDay)
+        
+        todaySummary = ActivitySummary(// from model-Activity Summary,occurance
+            steps: await steps,
+            distanceMeter: await distance,
+            activeEnergyKcal: await energy,
+            date: startOfDay
+            
+            
+        )
+        
     }
     
     
+    //MARK: --HK Queries
+    private func getSumQuanityFromStartDate(_ type: HKQuantityType, unit: HKUnit, since start: Date) async -> Double{
+        
+        return await withCheckedContinuation{ continuation in
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: Date())
+            let query = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ){ _, stats, _ in //query, stats, error <data handler>
+                let value = stats?.sumQuantity()?.doubleValue(for: unit) ?? 0  //return 0 if nil on sumQuantity
+                continuation.resume(returning: value)
+            }
+            
+            store.execute(query)
+        }
+        
+    }
+    
+    private func getLastestHeartRate() async -> Double{
+        //1. option
+        let unit = HKUnit.count().unitDivided(by: .minute())
+        
+        //        guard let heatRateType = HKQuantity.quantityType(forIdentifier: .heartRate) else { return}
+        //
+        return await withCheckedContinuation{ continuation in
+            let query = HKSampleQuery(
+                sampleType: heartRateType,
+                predicate: nil,
+                limit: 1,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]
+            ){ _, samples, _ in
+                let bpm = (samples?.first as? HKQuantitySample)?.quantity.doubleValue(for: unit) ?? 0
+                continuation.resume(returning: bpm)
+                
+            }
+            store.execute(query)
+            
+            
+        }
+    }
 }
