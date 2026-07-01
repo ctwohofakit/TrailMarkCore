@@ -26,6 +26,11 @@ public final class MediaStore{
     //index is where the app storage is
     private let indexFileName = "memos.json"
     
+    
+    public init() {
+        loadIndex()
+    }
+
     public var mediaDirectory: URL{
         //in for user domain mask for security
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

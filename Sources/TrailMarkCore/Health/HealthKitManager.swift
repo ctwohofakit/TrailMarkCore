@@ -41,7 +41,7 @@ public final class HealthKitManager{
     
     //MARK: authoization model
     //reading
-    private var readyType: Set<HKObjectType> {
+    private var readTypes: Set<HKObjectType> {
         [stepsType, distanceType, energyType, heartRateType, sleepType, HKObjectType.workoutType()]
     }
     
@@ -59,7 +59,7 @@ public final class HealthKitManager{
         
         
         do {
-            try await store.requestAuthorization(toShare: shareTypes, read: shareTypes)
+            try await store.requestAuthorization(toShare: shareTypes, read: readTypes)
             //note: for privacy ios nevel tells us whether read access was granted
             //we treat the request completed as authorized and let zeroed summary stand in screen
             //
@@ -78,8 +78,8 @@ public final class HealthKitManager{
         let startOfDay = calendar.startOfDay(for: now) //2026-06*25T17:24:12.000UTC
         
         async let steps = getSumQuanityFromStartDate(stepsType, unit: .count(), since: startOfDay)
-        async let distance = getSumQuanityFromStartDate(stepsType, unit: .meter(), since: startOfDay)
-        async let energy = getSumQuanityFromStartDate(stepsType, unit: .kilocalorie(), since: startOfDay)
+        async let distance = getSumQuanityFromStartDate(distanceType, unit: .meter(), since: startOfDay)
+        async let energy = getSumQuanityFromStartDate(energyType, unit: .kilocalorie(), since: startOfDay)
         
         todaySummary = ActivitySummary(// from model-Activity Summary,occurance
             steps: await steps,

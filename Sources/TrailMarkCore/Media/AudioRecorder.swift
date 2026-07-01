@@ -69,4 +69,9 @@ public final class AudioRecorder{
         try session.setActive(true)
     }
     
+    public func tick(){
+        guard isRecording, let startDate else{ return }
+        elapsed = Date().timeIntervalSince(startDate)
+    }
+    
 }
