@@ -42,3 +42,23 @@ public struct EnergyTrendPoint: Equatable, Sendable, Codable, Identifiable{
     
     
 }
+
+public struct LiveVitals: Equatable, Sendable, Codable{
+    public var heartRateBPM: Double
+    public var steps: Double
+    public var activeEnergyKcal: Double
+    
+    public init(heartRateBPM: Double = 0, steps: Double = 0, activeEnergyKcal: Double = 0){
+        self.heartRateBPM = heartRateBPM
+        self.steps = steps
+        self.activeEnergyKcal = activeEnergyKcal
+        
+        
+        
+    }
+    public static let empty = LiveVitals()
+    public var heartRateText: String{
+        "\(heartRateBPM.rounded())BPM"
+    }
+    
+}

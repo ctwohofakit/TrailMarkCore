@@ -8,6 +8,7 @@
 import Foundation
 import Observation
 
+
 @MainActor
 @Observable
 public final class JourneyStore {
@@ -20,7 +21,7 @@ public final class JourneyStore {
 
     private var fileURL: URL {
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("journeys.json")
+        return base.appendingPathComponent("journeys.json") //sqlite (select, update,delete, agreggators, sort, join)
     }
     
     public func add(_ journey: Journey){
@@ -50,13 +51,13 @@ public final class JourneyStore {
     
     private func load(){
         guard let data = try? Data(contentsOf : fileURL) else {return}
-        let decoded = (try? JSONDecoder().decode([Journey].self, from: data)) ?? []
+        let decoded = (try? JSONDecoder.trailmark.decode([Journey].self, from: data)) ?? []
 //        let decoded = (try? JSONDecoder.trailmark.decode([Journey].self, from: data)) ?? []
         journeys = decoded.sorted {$0.startedAt > $1.startedAt} //sorted is new copy, sote is adjsut the orignial
     }
     
     private func persist(){
-        guard let data = try? JSONEncoder().encode(journeys) else {return}
+        guard let data = try? JSONEncoder.trailmark.encode(journeys) else {return}
         try? data.write(to: fileURL ,options: .atomic) // atomic pattern bein tracsact execute commit -- roolbacked
     }
     

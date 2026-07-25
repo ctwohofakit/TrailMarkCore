@@ -96,4 +96,30 @@ public final class MediaStore{
         
     }
     
+    public func delete(_ memo: MediaMemo) {
+        let fileURL = url(for: memo)
+        try? fileManager.removeItem(at: fileURL)
+        memos.removeAll { $0.id == memo.id }
+        persistIndex()
+    }
+    
+    public func delete(at offsets: IndexSet){
+        offsets.map { memos[$0]}.forEach(delete)
+    }
+    
+    public func register(_ memo: MediaMemo){
+        guard !memos.contains(where: {$0.id == memo.id}) else {return}
+        memos.insert(memo, at:0)
+        memos.sort{$0.createdAt > $1.createdAt}
+        persistIndex()
+
+    }
+    
 }
+
+#if DEBUG
+extension MediaStore{
+    
+}
+
+#endif
